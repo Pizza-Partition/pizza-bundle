@@ -36,21 +36,24 @@ while IFS= read -r -d '' file; do
   # The glibc loader bootstraps itself and retains its upstream ELF layout.
   if [[ ${file##*/} == ld-linux-x86-64.so.2 ]]; then continue; fi
   if ! readelf -h "$file" >/dev/null 2>&1; then continue; fi
-  if ! readelf -l "$file" | grep -q DYNAMIC; then continue; fi
-  if readelf -l "$file" | grep -q INTERP; then
+  headers=$(readelf -l "$file")
+  if [[ $headers != *DYNAMIC* ]]; then continue; fi
+  if [[ $headers == *INTERP* ]]; then
     patchelf --set-interpreter lib/ld-linux-x86-64.so.2 "$file"
   fi
   runpath=${runpaths[${file%/*}]-}
   if [[ -z $runpath ]]; then
     runpath='$ORIGIN'
     for directory in "${library_dirs[@]}"; do
-    relative=$(realpath --relative-to="${file%/*}" "$directory")
-    if [[ $relative != . ]]; then runpath+=":\$ORIGIN/$relative"; fi
+      relative=$(realpath --relative-to="${file%/*}" "$directory")
+      if [[ $relative != . ]]; then runpath+=":\$ORIGIN/$relative"; fi
     done
     runpaths[${file%/*}]=$runpath
   fi
   patchelf --set-rpath "$runpath" "$file"
 done < <(find "$root/bin" "$root/lib" -type f -print0)
+# Archives must remain readable and usable by ordinary consumers; no setuid files.
+chmod -R u+rwX,go+rX,a-s,a-t "$root"
 python scripts/metadata.py "$root"
 tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
   -C "$root" -czf /out/pizza-runtime-x86_64.tar.gz .

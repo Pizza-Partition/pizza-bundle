@@ -23,10 +23,19 @@ jobs:
         run: docker run --rm --network none --shm-size 256m pizza-runtime-builder
       - name: Export tested runtime
         run: |
-          mkdir -p dist
+          mkdir -p dist kernel
           container=$(docker create pizza-runtime-builder)
           trap 'docker rm "$container"' EXIT
           docker cp "$container:/out/." dist/
+          docker cp "$container:/kernel/." kernel/
+          docker cp "$container:/kernel-smoke.cpio.gz" kernel-smoke.cpio.gz
+      - name: Boot pinned Linux 7.2.11 under QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86
+          timeout 60 qemu-system-x86_64 -machine q35 -accel tcg -m 256M -display none -serial stdio -monitor none -nic none -kernel kernel/vmlinuz -initrd kernel-smoke.cpio.gz -append 'console=ttyS0 rdinit=/init panic=1' -no-reboot > kernel-smoke.log 2>&1
+          cat kernel-smoke.log
+          grep -F 'PIZZA_KERNEL_READY:7.2.11-arch1-1' kernel-smoke.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pizza-runtime-x86_64
@@ -37,7 +46,7 @@ jobs:
         id: attest
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
-          subject-path: dist/pizza-runtime-x86_64.tar.gz
+          subject-path: dist/pizza-*.tar.gz
       - name: Publish tested release
         if: startsWith(github.ref, 'refs/tags/v')
         env:

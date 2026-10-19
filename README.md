@@ -1,7 +1,7 @@
 # pizza-bundle
 
 Third-party userspace for [Pizza](https://github.com/Pizza-Partition/pizza).
-This repository contains no Pizza application code. It publishes a portable runtime for x86_64 Linux.
+This repository contains no Pizza application code. It also publishes pinned Linux 7.2.11 (Arch release 7.2.11-arch1-1) with its matching modules. It publishes a portable runtime for x86_64 Linux.
 
 `pacman` resolves and verifies signed packages from a dated Arch Linux snapshot.
 The complete runtime libraries, plugins, resources and licenses are kept together.
@@ -36,3 +36,5 @@ and panel separately; kernel modules always come from the target host kernel.
 To update dependencies, change `ARCH_SNAPSHOT` in Containerfile and, when needed,
 the official base-image digest and `config/packages.txt`, then test and tag a new release.
 Upstream software retains its own license, preserved under `share/licenses`.
+
+The kernel package URL and SHA-256 are fixed in `config/kernel.json`; the Arch package signature is verified before extraction. `depmod` builds the matching module indexes. A QEMU boot test must print the exact kernel release before publication. The separate `pizza-kernel-x86_64.tar.gz` contains `vmlinuz`, `kernel.json` and `lib/modules/<release>`. Firmware is hardware-specific and is not bundled yet. Both release archives receive provenance attestations.

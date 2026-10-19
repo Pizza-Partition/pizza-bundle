@@ -1,0 +1,7 @@
+{
+  "version": "7.2.11",
+  "release": "7.2.11-arch1-1",
+  "package": "linux-7.2.11.arch1-1-x86_64.pkg.tar.zst",
+  "url": "https://archive.archlinux.org/packages/l/linux/linux-7.2.11.arch1-1-x86_64.pkg.tar.zst",
+  "sha256": "768377c62afada6cc04c48c9a281d8cb648cc7afc7b7c328c2c9072ba03085ff"
+}
