@@ -1,0 +1,15 @@
+glibc
+wpewebkit
+mesa
+libdrm
+libevdev
+libinput
+fontconfig
+ttf-dejavu
+bubblewrap
+xdg-dbus-proxy
+glib-networking
+gst-plugins-base
+gst-plugins-good
+shared-mime-info
+ca-certificates
