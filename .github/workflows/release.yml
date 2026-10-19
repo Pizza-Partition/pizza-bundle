@@ -34,7 +34,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86
           cat dist/pizza-base-x86_64.img kernel-smoke.cpio.gz > base-test.img
-          timeout 300 qemu-system-x86_64 -machine q35 -accel tcg -cpu max -m 4096M -display none -serial stdio -monitor none -nic none -kernel kernel/vmlinuz -initrd base-test.img -append 'console=ttyS0 rdinit=/init panic=1' -no-reboot > kernel-smoke.log 2>&1
+          timeout 300 qemu-system-x86_64 -machine q35 -accel tcg -cpu max -m 4096M -display none -serial stdio -monitor none -nic none -kernel kernel/vmlinuz -initrd base-test.img -append 'console=ttyS0 rdinit=/init panic=1' -no-reboot > kernel-smoke.log 2>&1 || { cat kernel-smoke.log; exit 1; }
           cat kernel-smoke.log
           grep -F 'PIZZA_BASE_READY:7.2.11-arch1-1' kernel-smoke.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

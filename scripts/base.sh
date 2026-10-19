@@ -7,6 +7,7 @@ mkdir -p /empty-conf
 export PIZZA_BUNDLE_ROOT=/build/pizza-runtime PIZZA_MODULES_ROOT=/kernel
 export PIZZA_DRIVERS='virtio_pci virtio_blk nvme ahci ext4 dummy'
 dracut --conf /dev/null --confdir /empty-conf --modules pizza-base \
+  --remove "/etc/ld.so.cache /etc/ld.so.conf /etc/ld.so.conf.d" \
   --no-hostonly --no-hostonly-cmdline --no-early-microcode --nostrip --gzip \
   --kver "$release" --kmoddir "/kernel/lib/modules/$release" \
   --include /build/pizza-runtime /opt/pizza/bundle --force /out/pizza-base-x86_64.img
