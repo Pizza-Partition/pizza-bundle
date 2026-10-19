@@ -11,15 +11,15 @@ no custom package resolver, ELF writer, dependency collector or per-file manifes
 
 ```sh
 docker build -f Containerfile -t pizza-runtime-builder .
-docker run --rm --cap-add SYS_ADMIN --security-opt seccomp=unconfined --network none pizza-runtime-builder
+docker run --rm --network none --shm-size 256m pizza-runtime-builder
 container=$(docker create pizza-runtime-builder)
 docker cp "$container:/out/." dist/
 docker rm "$container"
 ```
 
-The isolated chroot test checks loader/libc startup, WPE/EGL/GBM loading and a real
+The isolated scratch-container test checks loader/libc startup, WPE/EGL/GBM loading and a real
 WebKit WebProcess JavaScript/native reply round trip. It cannot fall back to the
-builder's libraries. The test disables WebKit sandboxing only inside the CI test.
+builder's libraries. The test disables WebKit sandboxing only inside the CI test. No extra container capabilities or security-policy overrides are required.
 DRM hardware, sandbox enforcement, RAM budgets and old-kernel compatibility need
 separate acceptance tests; this release does not claim those passed.
 

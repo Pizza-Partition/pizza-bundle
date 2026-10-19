@@ -13,3 +13,4 @@ gst-plugins-base
 gst-plugins-good
 shared-mime-info
 ca-certificates
+coreutils
