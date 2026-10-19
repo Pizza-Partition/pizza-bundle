@@ -10,7 +10,7 @@ metadata = {
     'kind': 'pizza-runtime',
     'profile': 'wpe-platform-v2',
     'architecture': 'x86_64',
-    'prefix': '/opt/pizza/bundle',
+    'working_directory': 'bundle-root',
     'runtime_versions': {'glibc': versions['glibc'].split('-')[0].split('+')[0], 'wpe-webkit': versions['wpewebkit'].split('-')[0]},
     'components': {'dynamic-loader': 'lib/ld-linux-x86-64.so.2', 'wpe-webkit': 'lib/libWPEWebKit-2.0.so.1'},
 }

@@ -1,12 +1,11 @@
 # pizza-bundle
 
 Third-party userspace for [Pizza](https://github.com/Pizza-Partition/pizza).
-This repository contains no Pizza application code. It publishes a fixed-prefix
-runtime at `/opt/pizza/bundle` for x86_64 Linux.
+This repository contains no Pizza application code. It publishes a portable runtime for x86_64 Linux.
 
 `pacman` resolves and verifies signed packages from a dated Arch Linux snapshot.
 The complete runtime libraries, plugins, resources and licenses are kept together.
-`patchelf` sets the loader and search paths; GNU tar creates the archive. There is
+`patchelf` sets relative PT_INTERP and $ORIGIN-based RUNPATHs; GNU tar creates the archive. There is
 no custom package resolver, ELF writer, dependency collector or per-file manifest.
 
 ```sh
@@ -19,7 +18,7 @@ docker rm "$container"
 
 The isolated scratch-container test checks loader/libc startup, WPE/EGL/GBM loading and a real
 WebKit WebProcess JavaScript/native reply round trip. It cannot fall back to the
-builder's libraries. The test disables WebKit sandboxing only inside the CI test. No extra container capabilities or security-policy overrides are required.
+builder's libraries. It moves the runtime to two different directories and repeats both ABI and real WPE tests. The test disables WebKit sandboxing only inside the CI test. No extra container capabilities or security-policy overrides are required.
 DRM hardware, sandbox enforcement, RAM budgets and old-kernel compatibility need
 separate acceptance tests; this release does not claim those passed.
 
@@ -31,7 +30,7 @@ Each release includes the archive, SHA256SUMS, package versions and attestation.
 Consumers must pin the archive digest, source commit, tag and this repository's
 `release.yml` workflow, and verify the attestation before extraction. `runtime.json`
 is a small format/architecture/interface contract, not a content security audit.
-The runtime must be used at its declared prefix. Pizza adds its own executables
+Launch executables with the runtime root as the working directory so relative PT_INTERP resolves to `lib/ld-linux-x86-64.so.2`. The runtime can be moved to any directory. Pizza adds its own executables
 and panel separately; kernel modules always come from the target host kernel.
 
 To update dependencies, change `ARCH_SNAPSHOT` in Containerfile and, when needed,

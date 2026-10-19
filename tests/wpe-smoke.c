@@ -57,7 +57,7 @@ int main(void) {
       "p=window.webkit.messageHandlers.pizza;"
       "const r=await p.postMessage('ping:'+6*7);await "
       "p.postMessage(r==='pong:42'?'PASS':'FAIL')})()</script>",
-      "file:///opt/pizza/bundle/");
+      "file:///");
   fprintf(stderr, "WPE: running page\n");
   g_main_loop_run(loop);
   puts(passed ? "PIZZA_WPE_SMOKE_PASS" : "PIZZA_WPE_SMOKE_FAIL");

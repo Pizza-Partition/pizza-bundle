@@ -8,17 +8,18 @@ COPY config /src/config
 COPY scripts /src/scripts
 COPY tests /src/tests
 RUN /src/scripts/build.sh
-# The test container has no builder userspace. Docker supplies proc/dev normally.
+# Copy to a different directory to test portability, with no builder userspace.
 RUN mkdir -p /testroot/usr /testroot/proc /testroot/dev /testroot/tmp /testroot/run/pizza /testroot/etc \
-    && ln -s /opt/pizza/bundle/lib /testroot/usr/lib \
-    && ln -s /opt/pizza/bundle/share /testroot/usr/share \
-    && ln -s /opt/pizza/bundle/bin /testroot/bin \
-    && ln -s /opt/pizza/bundle/lib /testroot/lib \
-    && ln -s /opt/pizza/bundle/lib /testroot/lib64
+    && ln -s /relocated/runtime/lib /testroot/usr/lib \
+    && ln -s /relocated/runtime/share /testroot/usr/share \
+    && ln -s /relocated/runtime/bin /testroot/bin \
+    && ln -s /relocated/runtime/lib /testroot/lib \
+    && ln -s /relocated/runtime/lib /testroot/lib64
 FROM scratch
 COPY --from=builder /testroot/ /
-COPY --from=builder /opt/pizza/bundle /opt/pizza/bundle
+COPY --from=builder /build/pizza-runtime /relocated/runtime
 COPY --from=builder /out /out
 COPY scripts/test.sh /test.sh
-ENV PATH=/opt/pizza/bundle/bin
-CMD ["/bin/bash", "/test.sh"]
+ENV PATH=/relocated/runtime/bin
+WORKDIR /relocated/runtime
+CMD ["bin/bash", "/test.sh"]
