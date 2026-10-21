@@ -80,7 +80,7 @@ The Linux 7.1+ `ntfs` kernel driver and `ntfs3` are both included; NTFS-3G is a 
 Additional hardware profiles and pinned firmware sources belong here. A future UEFI image can assemble
 the combined initramfs into a UKI and sign that final UKI, then use systemd-boot. Firmware framebuffer
 handover across kexec still requires real hardware verification; this release is an initramfs base.
-Consumers must publish and pin this new profile before assembling a new application image; old browser-profile
+Consumers must pin a published release of this profile before assembling a new application image; old browser-profile
 release assets are incompatible and must not be relabeled.
 
 Filesystem tool inputs are btrfs-progs, e2fsprogs, xfsprogs, dosfstools, exfatprogs,
@@ -103,8 +103,9 @@ Local validation of the current source profile passed two relocations with 40 co
 19 configured filesystems registered. These are base/runtime checks, not real filesystem mutation,
 visible DRM output, a completed consumer transition, or evidence of a new published release.
 
-The next delivery gate is a tested producer release and attestation, followed by Pizza updating its
-old v0.3.1 lock to the actual new assets. Pizza must also replace the removed bubblewrap command in
-its maintenance supervisor test before rerunning the complete application image tests. Later work
-adds explicit Blend2D/DRM userspace inputs, verifies cold-boot and kexec display handover, integrates
-real storage operations, and builds UEFI media. No step may restore host collection as a fallback.
+The [v0.4.1 release](https://github.com/Pizza-Partition/pizza-bundle/releases/tag/v0.4.1) passed the
+[complete publishing workflow](https://github.com/Pizza-Partition/pizza-bundle/actions/runs/39596637458)
+and includes attestation for its final assets. Consumer integration pins those actual assets and
+verifies the application layer separately. Later work adds explicit Blend2D/DRM userspace inputs,
+verifies cold-boot and kexec display handover, integrates real storage operations, and builds UEFI
+media. No step may restore host collection as a fallback.
