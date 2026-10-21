@@ -79,4 +79,4 @@ jobs:
           ATTESTATION: ${{ steps.attest.outputs.bundle-path }}
         run: |
           cp "$ATTESTATION" dist/attestation.json
-          gh release create "$RELEASE_TAG" dist/* --verify-tag --title "$RELEASE_TAG" --generate-notes
+          gh release create "$RELEASE_TAG" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --title "$RELEASE_TAG" --generate-notes
