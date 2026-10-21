@@ -8,10 +8,10 @@ versions = dict(line.split(maxsplit=1) for line in (root / 'share/pizza/package-
 metadata = {
     'format': 3,
     'kind': 'pizza-runtime',
-    'profile': 'wpe-platform-v2',
+    'profile': 'cpu-maint-v1',
     'architecture': 'x86_64',
     'working_directory': 'bundle-root',
-    'runtime_versions': {'glibc': versions['glibc'].split('-')[0].split('+')[0], 'wpe-webkit': versions['wpewebkit'].split('-')[0]},
-    'components': {'dynamic-loader': 'lib/ld-linux-x86-64.so.2', 'wpe-webkit': 'lib/libWPEWebKit-2.0.so.1'},
+    'runtime_versions': {'glibc': versions['glibc'].split('-')[0].split('+')[0], 'libblockdev': versions['libblockdev'].split('-')[0]},
+    'components': {'dynamic-loader': 'lib/ld-linux-x86-64.so.2', 'libblockdev': 'lib/libblockdev.so.3', 'libblockdev-fs': 'lib/libbd_fs.so.3'},
 }
 (root / 'runtime.json').write_text(json.dumps(metadata, indent=2) + '\n')

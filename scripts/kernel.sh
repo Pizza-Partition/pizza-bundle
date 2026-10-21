@@ -11,6 +11,15 @@ pacman-key --verify "$archive.sig" "$archive"
 mkdir -p /kernel/lib /out /kernel-smoke
 bsdtar -xf "$archive" --strip-components 2 -C /kernel/lib usr/lib/modules
 mv "/kernel/lib/modules/$release/vmlinuz" /kernel/vmlinuz
+# Validate the actual image, not a build-host .config. Upstream extractor is vendored.
+scripts/extract-ikconfig /kernel/vmlinuz > /kernel/config
+python - <<'CONFIG'
+import json
+required=json.load(open('config/maintenance.json'))['builtin_config']
+actual=set(open('/kernel/config').read().splitlines())
+missing=set(required)-actual
+assert not missing, f'Kernel lacks required built-in support: {sorted(missing)}'
+CONFIG
 depmod --basedir /kernel "$release"
 module=$(find "/kernel/lib/modules/$release/kernel" -name '*.ko.zst' -print -quit)
 [[ $(modinfo -F vermagic "$module") == "$release "* ]]

@@ -8,7 +8,7 @@
 
 /* This helper is built inside the package-source container and relocated with
  * the bundle. Optional argv entries are library SONAMEs to dlopen, so the
- * matrix can test WPE/Mesa/plugin closure as well as loader/libc startup. */
+ * matrix can test optional library closure as well as loader/libc startup. */
 int main(int argc, char **argv) {
   /* The matrix bootstraps via ld.so, then establishes the relative-interpreter
    * CWD. */

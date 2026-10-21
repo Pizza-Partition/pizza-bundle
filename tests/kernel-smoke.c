@@ -23,6 +23,9 @@ int main(void) {
       dup2(console, fd);
   struct utsname info;
   if (uname(&info) == 0 && !strcmp(info.release, EXPECTED_KERNEL)) {
+    if (mount("devtmpfs", "/dev", "devtmpfs", MS_NOSUID, NULL) != 0) goto failed;
+    mkdir("/sys", 0755);
+    if (mount("sysfs", "/sys", "sysfs", MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) != 0) goto failed;
     mkdir("/proc", 0755);
     if (mount("proc", "/proc", "proc", 0, NULL) != 0) goto failed;
     FILE *modules = fopen("/etc/pizza/modules", "r");
@@ -40,13 +43,43 @@ int main(void) {
     }
     if (ferror(modules) || !count) goto failed;
     fclose(modules);
+    FILE *expected = fopen("/etc/pizza/filesystems", "r");
+    if (!expected) goto failed;
+    unsigned filesystems = 0;
+    while (fgets(line, sizeof line, expected)) {
+      line[strcspn(line, "\n")] = 0;
+      FILE *available = fopen("/proc/filesystems", "r");
+      if (!available) goto failed;
+      char entry[4096];
+      int found = 0;
+      while (fgets(entry, sizeof entry, available)) {
+        char *name = strrchr(entry, '\t');
+        if (!name) continue;
+        name++;
+        name[strcspn(name, "\n")] = 0;
+        if (!strcmp(name, line)) found = 1;
+      }
+      fclose(available);
+      if (!found) { fprintf(stderr, "Missing filesystem: %s\n", line); goto failed; }
+      filesystems++;
+    }
+    if (ferror(expected) || !filesystems) goto failed;
+    fclose(expected);
+    printf("PIZZA_BASE_FILESYSTEMS:%u\n", filesystems);
     if (chdir("/opt/pizza/bundle") != 0) goto failed;
+    if (setenv("PATH", "/opt/pizza/bundle/bin", 1) != 0 || setenv("LC_ALL", "C", 1) != 0) goto failed;
     pid_t child = fork();
     if (child == 0) {
-      execl("bin/pizza-abi-check", "pizza-abi-check", "libWPEWebKit-2.0.so.1", (char *)NULL);
+      execl("bin/pizza-abi-check", "pizza-abi-check", (char *)NULL);
       _exit(127);
     }
     int status;
+    if (child < 0 || waitpid(child, &status, 0) != child || !WIFEXITED(status) || WEXITSTATUS(status)) goto failed;
+    child = fork();
+    if (child == 0) {
+      execl("bin/pizza-fs-smoke", "pizza-fs-smoke", (char *)NULL);
+      _exit(127);
+    }
     if (child < 0 || waitpid(child, &status, 0) != child || !WIFEXITED(status) || WEXITSTATUS(status)) goto failed;
     printf("PIZZA_BASE_MODULES:%u\nPIZZA_BASE_READY:%s\n", count, info.release);
   } else {

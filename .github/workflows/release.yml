@@ -9,30 +9,49 @@ permissions:
   contents: read
 jobs:
   runtime:
+    # GitHub provides the VM; every workflow step runs in this pinned Arch userspace.
     runs-on: ubuntu-26.04
+    container:
+      image: docker.io/library/archlinux:base@sha256:363129b67b2bc6c5a634f8fb4961a7e2eba213a2ec075d159127b1260290a722
+    defaults:
+      run:
+        shell: bash
+    env:
+      ARCH_SNAPSHOT: 2026/10/13
     timeout-minutes: 45
     permissions:
       contents: write
       id-token: write
       attestations: write
     steps:
+      # Install git before checkout so it creates a repository rather than a source archive.
+      - name: Install build and CI tools from the pinned Arch snapshot
+        run: |
+          printf 'Server = https://archive.archlinux.org/repos/%s/$repo/os/$arch\n' "$ARCH_SNAPSHOT" > /etc/pacman.d/mirrorlist
+          pacman -Syyuu --noconfirm --needed archlinux-keyring git patchelf binutils python gcc pkgconf curl libarchive kmod cpio zstd xz gzip docker docker-buildx qemu-system-x86 github-cli
+          pacman -Q patchelf gcc binutils cpio qemu-system-x86 docker github-cli
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Build runtime, kernel and base initramfs with mature tools
-        run: docker build --file Containerfile --tag pizza-runtime-builder .
-      - name: Test scratch userspace and real WPE JavaScript
-        run: docker run --rm --network none --shm-size 256m pizza-runtime-builder
+        run: |
+          ln -s "$GITHUB_WORKSPACE" /src
+          scripts/build.sh
+          scripts/kernel.sh
+          tests/modules.sh
+          scripts/base.sh
+          scripts/prepare-test-root.sh
+      - name: Test relocated scratch userspace
+        run: |
+          # Only the scratch test image is built here; compilation runs directly in Arch.
+          docker build --file tests/Containerfile --tag pizza-runtime-test /testroot
+          docker run --rm --network none --shm-size 256m pizza-runtime-test
       - name: Export tested runtime
         run: |
           mkdir -p dist kernel
-          container=$(docker create pizza-runtime-builder)
-          trap 'docker rm "$container"' EXIT
-          docker cp "$container:/out/." dist/
-          docker cp "$container:/kernel/." kernel/
-          docker cp "$container:/kernel-smoke.cpio.gz" kernel-smoke.cpio.gz
+          cp -a /out/. dist/
+          cp -a /kernel/. kernel/
+          cp /kernel-smoke.cpio.gz kernel-smoke.cpio.gz
       - name: Boot base plus test application overlay under Linux 7.2.11
         run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-system-x86
           cat dist/pizza-base-x86_64.img kernel-smoke.cpio.gz > base-test.img
           timeout 300 qemu-system-x86_64 -machine q35 -accel tcg -cpu max -m 4096M -display none -serial stdio -monitor none -nic none -kernel kernel/vmlinuz -initrd base-test.img -append 'console=ttyS0 rdinit=/init panic=1' -no-reboot > kernel-smoke.log 2>&1 || { cat kernel-smoke.log; exit 1; }
           cat kernel-smoke.log

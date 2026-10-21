@@ -2,8 +2,9 @@
 set -euo pipefail
 cd /src
 # pacman owns dependency resolution, package signature checking and extraction.
+# Rebuild from a clean package root so removed dependencies cannot survive.
+rm -rf -- /runtime /build/pizza-runtime
 mkdir -p /runtime/var/lib/pacman /runtime/etc /empty-hooks
-cp /etc/resolv.conf /runtime/etc/resolv.conf
 mapfile -t packages < config/packages.txt
 pacman --root /runtime --dbpath /runtime/var/lib/pacman \
   --gpgdir /etc/pacman.d/gnupg --cachedir /var/cache/pacman/pkg \
@@ -11,7 +12,9 @@ pacman --root /runtime --dbpath /runtime/var/lib/pacman \
 root=/build/pizza-runtime
 mkdir -p "$root" /out
 cp -a /runtime/usr/{bin,lib,share} "$root/"
-# Keep runtime resources/plugins/licenses wholesale; no hand-written dependency walker.
+cp -a /runtime/etc "$root/etc"
+rm -rf -- "$root/etc/ld.so.cache" "$root/etc/ld.so.conf" "$root/etc/ld.so.conf.d"
+# Keep runtime libraries/resources/licenses wholesale; no hand-written dependency walker.
 rm -rf "$root/share/man" "$root/share/info"
 # Convert package-owned absolute /usr symlinks to bundle-relative links.
 # Keep documentation because some upstream license files link into share/doc.
@@ -24,11 +27,30 @@ while IFS= read -r -d '' link; do
   fi
 done < <(find "$root" -type l -print0)
 find "$root/lib" -type f -name '*.a' -delete
-mkdir -p "$root/share/pizza" "$root/share/fonts"
-cp config/fonts.conf "$root/share/fonts/fonts.conf"
+mkdir -p "$root/share/pizza"
 pacman --root /runtime --dbpath /runtime/var/lib/pacman -Q > "$root/share/pizza/package-versions.tsv"
 cc -O2 -march=x86-64 tests/abi-check.c -ldl -o "$root/bin/pizza-abi-check"
-cc -O2 -march=x86-64 tests/wpe-smoke.c $(pkg-config --cflags --libs wpe-webkit-2.0 wpe-platform-2.0) -o "$root/bin/pizza-wpe-smoke"
+# Verify every requested command is actually supplied by the selected packages.
+python - "$root" <<'TOOLS'
+import json, pathlib, sys
+root=pathlib.Path(sys.argv[1])
+config=json.load(open('config/filesystem-tools.json'))
+packages=set(open('config/packages.txt').read().splitlines())
+commands=[]
+for entry in config.values():
+    assert entry['package'] in packages, entry['package']
+    for command in entry['commands']:
+        path=root/'bin'/command
+        assert path.is_file() and path.stat().st_mode & 0o111, f'Missing executable: {command}'
+        commands.append(command)
+(root/'share/pizza/filesystem-tools.txt').write_text('\n'.join(commands)+'\n')
+(root/'share/pizza/filesystem-tools.json').write_text(json.dumps(config,indent=2)+'\n')
+TOOLS
+PKG_CONFIG_SYSROOT_DIR=/runtime PKG_CONFIG_LIBDIR=/runtime/usr/lib/pkgconfig \
+    pkg-config --cflags --libs blockdev > /build/fs-smoke-flags
+read -r -a fs_flags < /build/fs-smoke-flags
+cc -O2 -march=x86-64 tests/fs-smoke.c "${fs_flags[@]}" -Wl,-rpath-link,/runtime/usr/lib -o "$root/bin/pizza-fs-smoke"
+
 # Standard patchelf; every interpreter and search path stays relative.
 mapfile -t library_dirs < <(find "$root/lib" -type f -name '*.so*' -printf '%h\n' | sort -u)
 declare -A runpaths

@@ -1,0 +1,6 @@
+# The context is /testroot, prepared from the built runtime, never the build host.
+FROM scratch
+COPY . /
+ENV PATH=/relocated/runtime/bin
+WORKDIR /relocated/runtime
+CMD ["bin/bash", "/test.sh"]

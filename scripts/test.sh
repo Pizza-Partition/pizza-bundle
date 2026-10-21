@@ -1,30 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# WORKDIR was moved from the build directory; relative PT_INTERP resolves from CWD.
+# Executed inside a scratch root containing only the package-built runtime.
 run_checks() {
-  local root=$PWD
-  export PATH="$root/bin"
-  export HOME=/run/pizza TMPDIR=/tmp XDG_RUNTIME_DIR=/run/pizza XDG_CACHE_HOME=/run/pizza/cache
-  export WPE_DISPLAY=wpe-display-headless WPE_PLATFORM=headless EGL_PLATFORM=surfaceless
-  export LIBGL_ALWAYS_SOFTWARE=true WEBKIT_SKIA_ENABLE_CPU_RENDERING=1
-  # CI-only; production startup retains sandbox enforcement.
-  export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
-  export FONTCONFIG_FILE="$root/share/fonts/fonts.conf"
-  export XDG_DATA_DIRS="$root/share" GIO_EXTRA_MODULES="$root/lib/gio/modules"
-  export WEBKIT_INJECTED_BUNDLE_PATH="$root/lib/wpe-webkit-2.0/injected-bundle"
-  bin/pizza-abi-check libWPEWebKit-2.0.so.1 libEGL.so.1 libgbm.so.1
-  timeout 90 bin/pizza-wpe-smoke
+  export PATH="$PWD/bin"
+  bin/pizza-abi-check libblockdev.so.3 libbd_fs.so.3
+  bin/pizza-fs-smoke
+  local command status count=0
+  while IFS= read -r command; do
+    [[ -x bin/$command ]]
+    status=0
+    "bin/$command" --help > /tmp/pizza-tool-output 2>&1 || status=$?
+    if ((status >= 126)); then
+      cat /tmp/pizza-tool-output >&2
+      echo "Tool failed to start: $command ($status)" >&2
+      return 1
+    fi
+    ((count+=1))
+  done < share/pizza/filesystem-tools.txt
+  echo "PIZZA_FILESYSTEM_TOOLS_READY:$count"
 }
 run_checks
-# Move the whole tree again, with neither a loader nor library left at its old location.
 mkdir -p /moved
 mv "$PWD" /moved/portable-runtime
 cd /moved/portable-runtime
 export PATH="$PWD/bin"
-# Upstream WPE has compiled-in libexec/resource paths; the RAM image also supplies aliases.
-# These are image integration, not fixed paths in ELF interpreters or RUNPATHs.
 for alias in /usr/lib /lib /lib64; do bin/ln -sfn "$PWD/lib" "$alias"; done
 bin/ln -sfn "$PWD/share" /usr/share
-bin/ln -sfn "$PWD/bin" /bin
+for alias in /bin /sbin /usr/bin /usr/sbin; do bin/ln -sfn "$PWD/bin" "$alias"; done
 run_checks
-echo 'PASS: moved runtime, relative interpreter/RUNPATH, ABI and WPE JavaScript round trips'
+echo 'PASS: moved runtime, relative interpreter/RUNPATH and self-contained filesystem tools and libblockdev ABI'
