@@ -67,7 +67,9 @@ int main(void) {
     fclose(expected);
     printf("PIZZA_BASE_FILESYSTEMS:%u\n", filesystems);
     if (chdir("/opt/pizza/bundle") != 0) goto failed;
-    if (setenv("PATH", "/opt/pizza/bundle/bin", 1) != 0 || setenv("LC_ALL", "C", 1) != 0) goto failed;
+    if (setenv("PATH", "/opt/pizza/bundle/bin", 1) != 0 ||
+        setenv("LC_ALL", "C", 1) != 0 ||
+        setenv("PIZZA_RESCUE_IMAGE", "1", 1) != 0) goto failed;
     pid_t child = fork();
     if (child == 0) {
       execl("bin/pizza-abi-check", "pizza-abi-check", (char *)NULL);
@@ -77,7 +79,7 @@ int main(void) {
     if (child < 0 || waitpid(child, &status, 0) != child || !WIFEXITED(status) || WEXITSTATUS(status)) goto failed;
     child = fork();
     if (child == 0) {
-      execl("bin/pizza-fs-smoke", "pizza-fs-smoke", (char *)NULL);
+      execl("bin/bash", "bash", "share/pizza/rescue-smoke.sh", (char *)NULL);
       _exit(127);
     }
     if (child < 0 || waitpid(child, &status, 0) != child || !WIFEXITED(status) || WEXITSTATUS(status)) goto failed;

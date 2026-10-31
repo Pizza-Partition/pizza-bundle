@@ -38,7 +38,20 @@
     "nls_cp437",
     "nls_iso8859_1",
     "nls_utf8",
-    "nilfs2"
+    "nilfs2",
+    "loop",
+    "fuse",
+    "dm_mod",
+    "dm_crypt",
+    "dm_mirror",
+    "dm_snapshot",
+    "dm_thin_pool",
+    "dm_raid",
+    "md_mod",
+    "raid0",
+    "raid1",
+    "raid10",
+    "raid456"
   ],
   "firmware": [],
   "filesystems": [

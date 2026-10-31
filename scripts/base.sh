@@ -18,6 +18,16 @@ ln -s /opt/pizza/bundle/bin "$root/usr/bin"
 ln -s /opt/pizza/bundle/bin "$root/usr/sbin"
 ln -s /opt/pizza/bundle/lib "$root/usr/lib"
 ln -s /opt/pizza/bundle/share "$root/usr/share"
+ln -s /opt/pizza/bundle/lib "$root/lib64"
+# Rescue commands must work after cd into an arbitrary mountpoint. Only the
+# image copy uses the conventional absolute loader; the portable archive keeps
+# its relative interpreter. RUNPATH stays relative to each executable/library.
+while IFS= read -r -d '' file; do
+    headers=$(readelf -l "$file" 2>/dev/null) || continue
+    if [[ $headers == *INTERP* ]]; then
+        patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 "$file"
+    fi
+done < <(find "$root/opt/pizza/bundle/bin" "$root/opt/pizza/bundle/lib" -type f -print0)
 # No /init: the consumer or the boot-test overlay supplies it.
 find "$root" -exec touch -h -d @0 -- {} +
 (cd "$root" && find . -print0 | LC_ALL=C sort -z | cpio --null --create --format=newc --reproducible --owner=0:0 --quiet | gzip -n > /out/pizza-base-x86_64.img)

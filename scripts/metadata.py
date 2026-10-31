@@ -11,7 +11,10 @@ metadata = {
     'profile': 'cpu-maint-v1',
     'architecture': 'x86_64',
     'working_directory': 'bundle-root',
-    'runtime_versions': {'glibc': versions['glibc'].split('-')[0].split('+')[0], 'libblockdev': versions['libblockdev'].split('-')[0]},
-    'components': {'dynamic-loader': 'lib/ld-linux-x86-64.so.2', 'libblockdev': 'lib/libblockdev.so.3', 'libblockdev-fs': 'lib/libbd_fs.so.3'},
+    'runtime_versions': {'glibc': versions['glibc'].split('-')[0].split('+')[0]},
+    'components': {'dynamic-loader': 'lib/ld-linux-x86-64.so.2',
+                   'rescue-shell': 'bin/bash', 'fallback-shell': 'bin/busybox'},
+    'rescue': {'distribution': 'SystemRescue',
+               'manifest': 'share/pizza/rescue.json'},
 }
 (root / 'runtime.json').write_text(json.dumps(metadata, indent=2) + '\n')

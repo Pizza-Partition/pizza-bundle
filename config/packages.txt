@@ -1,13 +1,83 @@
-glibc
-coreutils
+# Filesystem rescue subset of config/systemrescue/packages.tsv.
+# Package versions and dependency resolution use the pinned Arch snapshot.
+
+# Shell and terminal
 bash
+bash-completion
+busybox
+ncurses
+readline
+vim
+nano
+tmux
+less
+man-db
+man-pages
+
+# Common utilities
+coreutils
+findutils
+grep
+sed
+gawk
+diffutils
+file
+util-linux
+procps-ng
+psmisc
+tree
+which
+acl
+attr
+
+# Archives
+tar
+cpio
+gzip
+bzip2
+xz
+zstd
+zip
+unzip
+
+# Partitions and filesystems
+parted
+gptfdisk
 btrfs-progs
 e2fsprogs
 xfsprogs
 dosfstools
-libblockdev-fs
+fatresize
 exfatprogs
+ntfs-3g
 ntfsprogs
 f2fs-tools
 nilfs-utils
 udftools
+mtools
+squashfs-tools
+
+# Volume management and hardware diagnostics
+lvm2
+mdadm
+cryptsetup
+multipath-tools
+smartmontools
+nvme-cli
+hdparm
+
+# Data recovery
+ddrescue
+testdisk
+partclone
+fsarchiver
+hexedit
+
+# Network transfer
+iproute2
+iputils
+curl
+wget
+openssh
+rsync
+ca-certificates

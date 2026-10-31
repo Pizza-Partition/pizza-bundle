@@ -1,7 +1,12 @@
 {
   "btrfs": {
     "package": "btrfs-progs",
-    "commands": ["mkfs.btrfs", "btrfs", "btrfsck", "btrfstune"]
+    "commands": [
+      "mkfs.btrfs",
+      "btrfs",
+      "btrfsck",
+      "btrfstune"
+    ]
   },
   "ext": {
     "package": "e2fsprogs",
@@ -29,30 +34,59 @@
   },
   "vfat": {
     "package": "dosfstools",
-    "commands": ["mkfs.vfat", "fsck.vfat", "fatlabel"]
+    "commands": [
+      "mkfs.vfat",
+      "fsck.vfat",
+      "fatlabel"
+    ]
   },
   "vfat-resize": {
-    "package": "libblockdev-fs",
-    "commands": ["vfat-resize"]
+    "package": "fatresize",
+    "commands": [
+      "fatresize"
+    ]
   },
   "exfat": {
     "package": "exfatprogs",
-    "commands": ["mkfs.exfat", "fsck.exfat", "tune.exfat"]
+    "commands": [
+      "mkfs.exfat",
+      "fsck.exfat",
+      "tune.exfat"
+    ]
   },
   "ntfs": {
     "package": "ntfsprogs",
-    "commands": ["mkntfs", "ntfsfix", "ntfsresize", "ntfslabel", "ntfsinfo"]
+    "commands": [
+      "mkntfs",
+      "ntfsfix",
+      "ntfsresize",
+      "ntfslabel",
+      "ntfsinfo"
+    ]
   },
   "f2fs": {
     "package": "f2fs-tools",
-    "commands": ["mkfs.f2fs", "fsck.f2fs", "dump.f2fs", "resize.f2fs"]
+    "commands": [
+      "mkfs.f2fs",
+      "fsck.f2fs",
+      "dump.f2fs",
+      "resize.f2fs"
+    ]
   },
   "nilfs2": {
     "package": "nilfs-utils",
-    "commands": ["mkfs.nilfs2", "nilfs-tune", "nilfs-resize"]
+    "commands": [
+      "mkfs.nilfs2",
+      "nilfs-tune",
+      "nilfs-resize"
+    ]
   },
   "udf": {
     "package": "udftools",
-    "commands": ["mkudffs", "udflabel", "udfinfo"]
+    "commands": [
+      "mkudffs",
+      "udflabel",
+      "udfinfo"
+    ]
   }
 }

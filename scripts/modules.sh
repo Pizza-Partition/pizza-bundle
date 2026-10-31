@@ -24,13 +24,13 @@ mkdir -p "$output_root/etc/pizza"
 printf '%s\n' "$release" > "$output_root/etc/pizza/kernel-version"
 : > "$output_root/etc/pizza/modules"
 : > "$output_root/etc/pizza/firmware"
-audit_firmware() {
+auditFirmware() {
     local names
     names=$(modinfo --basedir "$source_root" --set-version "$release" -F firmware "$1")
     [[ -z $names ]] || { echo "Profile requires explicit hardware firmware: $1: $names" >&2; return 1; }
 }
 for driver in "${drivers[@]}"; do
-    audit_firmware "$driver"
+    auditFirmware "$driver"
     dependencies=$(modprobe --dirname "$source_root" --config /dev/null --ignore-install --set-version "$release" --show-depends -- "$driver")
     while read -r action source unused; do
         case "$action" in
@@ -42,7 +42,7 @@ for driver in "${drivers[@]}"; do
         # Resolve symlinks before accepting the package boundary.
         source=$(realpath -e -- "$source")
         [[ $source == "$modules_root/"* ]] || { echo "Module outside package root: $source" >&2; exit 1; }
-        audit_firmware "$source"
+        auditFirmware "$source"
         relative=${source#"$source_root"}
         destination=${relative%.zst}
         destination=${destination%.xz}

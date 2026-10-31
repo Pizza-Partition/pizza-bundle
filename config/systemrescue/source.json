@@ -1,0 +1,8 @@
+{
+  "distribution": "SystemRescue",
+  "version": "13.02",
+  "architecture": "amd64",
+  "url": "https://www.system-rescue.org/Detailed-packages-list/",
+  "retrieved": "2026-10-25",
+  "inventory_sha256": "2b8211c5308728fb3840083169f4ebc6389cb8332eed660e699e66e5cb7d98f0"
+}
