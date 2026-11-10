@@ -18,7 +18,8 @@ import json
 required=json.load(open('config/maintenance.json'))['builtin_config']
 actual=set(open('/kernel/config').read().splitlines())
 missing=set(required)-actual
-assert not missing, f'Kernel lacks required built-in support: {sorted(missing)}'
+if missing:
+    raise SystemExit(f'Kernel lacks required built-in support: {sorted(missing)}')
 CONFIG
 depmod --basedir /kernel "$release"
 module=$(find "/kernel/lib/modules/$release/kernel" -name '*.ko.zst' -print -quit)

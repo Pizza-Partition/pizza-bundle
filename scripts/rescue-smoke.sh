@@ -2,18 +2,23 @@
 set -euo pipefail
 # Run from the bundle root, in an isolated container or disposable VM only.
 export PATH="$PWD/bin" LC_ALL=C
+readonly SHELL_COMMAND_NOT_EXECUTABLE=126
 bundle_root=$PWD
+expected=$(awk 'END {print NR}' share/pizza/rescue-tools.tsv)
+((expected > 0)) || { echo "Empty rescue tool manifest" >&2; exit 1; }
 count=0
 while IFS=$'\t' read -r command argument; do
     status=0
-    "bin/$command" "$argument" > /tmp/pizza-rescue-output 2>&1 || status=$?
-    if ((status >= 126)); then
+    "bin/$command" "$argument" </dev/null > /tmp/pizza-rescue-output 2>&1 || status=$?
+    if ((status >= SHELL_COMMAND_NOT_EXECUTABLE)); then
         cat /tmp/pizza-rescue-output >&2
         echo "Rescue tool failed to start: $command ($status)" >&2
         exit 1
     fi
     ((count+=1))
 done < share/pizza/rescue-tools.tsv
+
+((count == expected)) || { echo "Rescue tool coverage: $count/$expected" >&2; exit 1; }
 
 # Check resources and actual command behavior as well as process startup.
 fixture=$(mktemp -d /tmp/pizza-rescue.XXXXXX)

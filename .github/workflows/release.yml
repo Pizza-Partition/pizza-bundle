@@ -20,9 +20,7 @@ jobs:
       ARCH_SNAPSHOT: 2026/10/13
     timeout-minutes: 45
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
+      contents: read
     steps:
       # Install git before checkout so it creates a repository rather than a source archive.
       - name: Install build and CI tools from the pinned Arch snapshot
@@ -63,6 +61,19 @@ jobs:
           name: pizza-runtime-x86_64
           path: dist/
           if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: runtime
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: pizza-runtime-x86_64
+          path: dist/
       - name: Attest final archive
         if: startsWith(github.ref, 'refs/tags/v')
         id: attest

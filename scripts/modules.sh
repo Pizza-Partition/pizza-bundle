@@ -14,8 +14,10 @@ modules_root="$source_root/lib/modules/$release"
 mapfile -t drivers < <(python - "$profile" <<'PROFILE'
 import json, re, sys
 profile=json.load(open(sys.argv[1]))
-assert profile['firmware'] == [], 'hardware firmware needs an explicit package source'
-assert profile['drivers'] and all(re.fullmatch(r'[a-zA-Z0-9_]+', d) for d in profile['drivers'])
+if profile['firmware'] != []:
+    raise SystemExit('hardware firmware needs an explicit package source')
+if not profile['drivers'] or not all(re.fullmatch(r'[a-zA-Z0-9_]+', d) for d in profile['drivers']):
+    raise SystemExit('invalid driver allowlist')
 print('\n'.join(profile['drivers']))
 PROFILE
 )
