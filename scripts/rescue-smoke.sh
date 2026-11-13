@@ -4,15 +4,24 @@ set -euo pipefail
 export PATH="$PWD/bin" LC_ALL=C
 readonly SHELL_COMMAND_NOT_EXECUTABLE=126
 bundle_root=$PWD
+fixture=$(mktemp -d /tmp/pizza-rescue.XXXXXX)
+trap 'rm -rf -- "$fixture"' EXIT
+probe_output="$fixture/probe-output"
 expected=$(awk 'END {print NR}' share/pizza/rescue-tools.tsv)
 ((expected > 0)) || { echo "Empty rescue tool manifest" >&2; exit 1; }
 count=0
 while IFS=$'\t' read -r command argument; do
     status=0
-    "bin/$command" "$argument" </dev/null > /tmp/pizza-rescue-output 2>&1 || status=$?
-    if ((status >= SHELL_COMMAND_NOT_EXECUTABLE)); then
-        cat /tmp/pizza-rescue-output >&2
-        echo "Rescue tool failed to start: $command ($status)" >&2
+    "bin/$command" "$argument" </dev/null > "$probe_output" 2>&1 || status=$?
+    # Help exits vary between upstream tools (e.g. usage errors). Version
+    # probes have a stronger contract and must actually succeed.
+    version_failed=0
+    case "$argument" in
+        --version|-V|version) ((status == 0)) || version_failed=1 ;;
+    esac
+    if ((status >= SHELL_COMMAND_NOT_EXECUTABLE || version_failed)) || [[ ! -s $probe_output ]]; then
+        cat "$probe_output" >&2
+        echo "Rescue tool probe failed: $command ($status)" >&2
         exit 1
     fi
     ((count+=1))
@@ -21,8 +30,6 @@ done < share/pizza/rescue-tools.tsv
 ((count == expected)) || { echo "Rescue tool coverage: $count/$expected" >&2; exit 1; }
 
 # Check resources and actual command behavior as well as process startup.
-fixture=$(mktemp -d /tmp/pizza-rescue.XXXXXX)
-trap 'rm -rf -- "$fixture"' EXIT
 printf 'pizza rescue fixture\n' > "$fixture/input"
 bin/vim -u NONE -i NONE -n -es "$fixture/input" \
     -c 's/rescue/recovered/' -c wq
