@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /src
-release=$(python -c 'import json; print(json.load(open("config/kernel.json"))["release"])')
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+release=$(python scripts/read-config.py config/kernel.json release)
 root=/build/pizza-base
 rm -rf -- "$root"
 mkdir -p "$root" /out

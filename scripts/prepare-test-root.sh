@@ -12,4 +12,4 @@ ln -s /relocated/runtime/lib /testroot/lib
 ln -s /relocated/runtime/lib /testroot/lib64
 cp -a /build/pizza-runtime /testroot/relocated/runtime
 cp -a /build/pizza-runtime/etc/. /testroot/etc/
-cp /src/scripts/test.sh /testroot/test.sh
+cp "$(dirname "${BASH_SOURCE[0]}")/test.sh" /testroot/test.sh

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /src
-mapfile -t fields < <(python -c 'import json; d=json.load(open("config/kernel.json")); print("\n".join(d[k] for k in ["version","release","url","sha256"]))')
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+mapfile -t fields < <(python scripts/read-config.py config/kernel.json version release url sha256)
 release=${fields[1]}
 archive=/tmp/pizza-linux.pkg.tar.zst
 curl --fail --location --retry 3 --output "$archive" "${fields[2]}"
@@ -30,4 +30,3 @@ tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -C /kernel -czf /
 cc -static -O2 -march=x86-64 -DEXPECTED_KERNEL=\""$release"\" tests/kernel-smoke.c -o /kernel-smoke/init
 (cd /kernel-smoke && printf 'init\n' | cpio --create --format=newc --quiet | gzip -n > /kernel-smoke.cpio.gz)
 cd /out
-sha256sum pizza-*.tar.gz > SHA256SUMS

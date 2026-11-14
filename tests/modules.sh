@@ -4,7 +4,7 @@ set -euo pipefail
 root=$(mktemp -d)
 trap 'rm -rf -- "$root"' EXIT
 kernel_root=${1:-/kernel}
-release=$(python -c 'import json; print(json.load(open("config/kernel.json"))["release"])')
+release=$(python scripts/read-config.py config/kernel.json release)
 scripts/modules.sh "$kernel_root" "$root/image" "$release" config/maintenance.json
 [[ -s $root/image/etc/pizza/modules && ! -s $root/image/etc/pizza/firmware ]]
 while IFS= read -r module; do

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('rescue', REPO / 'scripts/check-rescue.py')
+spec = importlib.util.spec_from_file_location('rescue', REPO / 'scripts/rescue-metadata.py')
 rescue = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(rescue)
 
@@ -68,6 +68,19 @@ class RescueSubsetTest(unittest.TestCase):
         manifest = json.loads((root / 'share/pizza/rescue.json').read_text())
         self.assertEqual(set(manifest['selected_packages']), set(manifest['package_versions']))
         self.assertEqual(manifest['fallback_shell'], 'bin/busybox')
+        probes = dict(line.split('\t') for line in (root / 'share/pizza/rescue-tools.tsv').read_text().splitlines())
+        self.assertEqual(probes['awk'], '--help')
+        self.assertEqual(probes['cryptsetup'], '--version')
+
+    def testRejectsUnselectedProbeOverride(self):
+        root = self.runtime()
+        path = self.config / 'rescue-tools.json'
+        tools = json.loads(path.read_text())
+        tools['probe_overrides']['unselected-tool'] = '--version'
+        path.write_text(json.dumps(tools))
+        with self.assertRaisesRegex(ValueError, 'outside selected rescue commands'):
+            rescue.validateRuntime(self.config, root)
+
 
     def testRejectsDependencyOutsideUpstream(self):
         root = self.runtime()

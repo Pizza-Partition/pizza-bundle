@@ -6,9 +6,7 @@ RUN printf 'Server = https://archive.archlinux.org/repos/%s/$repo/os/$arch\n' "$
 COPY config /src/config
 COPY scripts /src/scripts
 COPY tests /src/tests
-RUN /src/scripts/build.sh && /src/scripts/kernel.sh && cd /src && tests/modules.sh && scripts/base.sh
-# Use the same isolated test root as the direct Arch CI build.
-RUN /src/scripts/prepare-test-root.sh
+RUN /src/scripts/build-all.sh
 FROM scratch
 COPY --from=builder /testroot/ /
 COPY --from=builder /out /out

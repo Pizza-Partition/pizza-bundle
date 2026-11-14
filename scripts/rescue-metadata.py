@@ -1,4 +1,4 @@
-"""Validate the SystemRescue subset; pacman owns all dependency resolution."""
+"""Select rescue packages and generate validated runtime rescue metadata."""
 import argparse
 import hashlib
 import json
@@ -43,7 +43,11 @@ def validateRuntime(config, root):
         raise ValueError(f'Missing packages: {sorted(missing)}; '
                          f'packages outside SystemRescue: {sorted(outside)}')
     rescue = json.loads((config / 'rescue-tools.json').read_text())
-    commands = dict(rescue['commands'])
+    commands = dict.fromkeys(rescue['commands'], '--help')
+    overrides = rescue.get('probe_overrides', {})
+    if overrides.keys() - commands.keys():
+        raise ValueError('Probe override outside selected rescue commands')
+    commands.update(overrides)
     filesystem_commands = []
     for entry in filesystem.values():
         for command in entry['commands']:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /src
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 python -m unittest discover -s tests -p 'test_*.py'
 # pacman owns dependency resolution, package signature checking and extraction.
 # Rebuild from a clean package root so removed dependencies cannot survive.
@@ -10,7 +10,7 @@ mkdir -p /build
 # Official container images may omit documentation through NoExtract. Rescue
 # packages need their complete manuals/resources, not the builder's slim policy.
 sed '/^[[:space:]]*NoExtract[[:space:]]*=/d' /etc/pacman.conf > /build/pacman-rescue.conf
-python scripts/check-rescue.py > /build/rescue-packages.txt
+python scripts/rescue-metadata.py > /build/rescue-packages.txt
 mapfile -t packages < /build/rescue-packages.txt
 pacman --config /build/pacman-rescue.conf --root /runtime --dbpath /runtime/var/lib/pacman \
   --gpgdir /etc/pacman.d/gnupg --cachedir /var/cache/pacman/pkg \
@@ -43,7 +43,7 @@ cc -O2 -march=x86-64 tests/abi-check.c -ldl -o "$root/bin/pizza-abi-check"
 for command in reboot poweroff halt; do
   [[ -e $root/bin/$command ]] || ln -s busybox "$root/bin/$command"
 done
-python scripts/check-rescue.py --runtime "$root"
+python scripts/rescue-metadata.py --runtime "$root"
 cp scripts/rescue-smoke.sh "$root/share/pizza/rescue-smoke.sh"
 # The package-provided last-resort shell must work without the dynamic loader.
 fallback_headers=$(readelf -l "$root/bin/busybox")
@@ -82,5 +82,4 @@ python scripts/metadata.py "$root"
 tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
   -C "$root" -czf /out/pizza-runtime-x86_64.tar.gz .
 cd /out
-sha256sum pizza-runtime-x86_64.tar.gz > SHA256SUMS
 cp "$root/share/pizza/package-versions.tsv" .
